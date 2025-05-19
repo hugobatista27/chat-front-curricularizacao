@@ -5,90 +5,18 @@ const usernameInput = document.getElementById('username');
 const sendButton = document.getElementById('sendButton');
 const connectionStatus = document.getElementById('connectionStatus');
 
-// Configuração do WebSocket
-let socket;
-let reconnectAttempts = 0;
-const maxReconnectAttempts = 5;
-const reconnectDelay = 3000; // 3 segundos
-
-// Iniciar conexão
-connectToWebSocket();
-
-// Função para conectar ao WebSocket
-function connectToWebSocket() {
-    // Usar o host atual, mas com WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Para desenvolvimento local, pode usar este endereço:
-    const wsUrl = `${protocol}//${window.location.hostname}:3000`;
-    
-    updateConnectionStatus('connecting', 'Conectando...');
-    
-    socket = new WebSocket(wsUrl);
-    
-    // Eventos do WebSocket
-    socket.onopen = onSocketOpen;
-    socket.onmessage = onSocketMessage;
-    socket.onclose = onSocketClose;
-    socket.onerror = onSocketError;
-}
-
-// Manipulador para abertura da conexão
-function onSocketOpen() {
-    console.log('Conectado ao servidor WebSocket');
-    updateConnectionStatus('connected', 'Conectado');
-    reconnectAttempts = 0;
-}
-
-// Manipulador para recebimento de mensagens
-function onSocketMessage(event) {
-    try {
-        const data = JSON.parse(event.data);
-        displayMessage(data);
-    } catch (error) {
-        console.error('Erro ao processar mensagem recebida:', error);
-    }
-}
-
-// Manipulador para fechamento da conexão
-function onSocketClose() {
-    updateConnectionStatus('disconnected', 'Desconectado');
-    
-    // Tentar reconectar automaticamente
-    if (reconnectAttempts < maxReconnectAttempts) {
-        reconnectAttempts++;
-        updateConnectionStatus('connecting', `Reconectando (${reconnectAttempts}/${maxReconnectAttempts})...`);
-        
-        setTimeout(connectToWebSocket, reconnectDelay);
-    } else {
-        updateConnectionStatus('disconnected', 'Falha na conexão. Recarregue a página.');
-    }
-}
-
-// Manipulador para erros de conexão
-function onSocketError(error) {
-    console.error('Erro na conexão WebSocket:', error);
-    updateConnectionStatus('disconnected', 'Erro na conexão');
-}
-
-// Atualizar o status da conexão
-function updateConnectionStatus(state, message) {
-    connectionStatus.textContent = message;
-    connectionStatus.className = 'connection-status ' + state;
-}
-
 // Enviar mensagem
 function sendMessage() {
     const username = usernameInput.value.trim() || 'Anônimo';
     const message = messageInput.value.trim();
     
-    if (message && socket && socket.readyState === WebSocket.OPEN) {
+    if (message) {
         const data = {
             type: 'user',
             username: username,
             message: message
         };
         
-        socket.send(JSON.stringify(data));
         messageInput.value = '';
         
         // Exibir a mensagem enviada localmente
